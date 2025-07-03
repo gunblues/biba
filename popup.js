@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('Popup: Received response from background:', response);
     if (response && response.siteList) {
       console.log('Popup: Processing site list:', response.siteList);
-      response.siteList.forEach(site => {
+      response.siteList.filter(site => site.hostname !== 'shopee.tw').forEach(site => {
         const div = document.createElement('div');
         div.className = 'site-item';
         let extraInputHtml = '';
@@ -82,8 +82,8 @@ document.addEventListener('DOMContentLoaded', () => {
         </head>
         <body>
           <h1>比吧 使用說明</h1>
-          <p>「比吧」是一款幫您找到有沒有比蝦皮賣的更便宜的電商，當您瀏覽蝦皮的商品頁或搜尋結果頁時能自動為您開啟其它電商網站的搜尋結果頁，讓您輕鬆比！</p>
-		  <p>為什麼不用 google 購物或比價網站呢? 因為它們都不是及時及新各大電商的商品價格和庫存，只有直接連去電商的網站才能獲得最新的商品資訊！</p>
+          <p>「比吧」能幫您更快找到有沒有比蝦皮賣的更便宜的電商，當您瀏覽蝦皮的商品頁或搜尋結果頁時能自動為您開啟其它電商網站的搜尋結果頁，讓您輕鬆比！</p>
+		      <p>為什麼不用 google 購物或比價網站呢? 因為它們都不是及時及新各大電商的商品價格和庫存，只有直接連去電商的網站才能獲得最新的商品資訊！</p>
 
           <h2>主要功能</h2>
           <ul>
