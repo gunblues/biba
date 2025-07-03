@@ -1,6 +1,8 @@
 
 console.log('Content script: Initializing...', window.location.href);
 
+let lastProcessedUrl = window.location.href;
+
 // Function to get the title from meta tags or document title
 function getTitle() {
   const ogTitle = document.querySelector('meta[property="og:title"]');
@@ -110,24 +112,69 @@ function isProductOrSearchPage(site, currentUrl) {
   return false;
 }
 
-const site = Object.values(config.sites).flat().find(s => window.location.hostname.includes(s.hostname));
-console.log('Content: Site config lookup result:', site);
+// Main logic to be executed on page load and URL changes
+function handlePageChange() {
+  const currentUrl = window.location.href;
+  console.log('Content: handlePageChange triggered for URL:', currentUrl);
 
-if (site && site.name === '蝦皮購物') {
-  const isRelevantPage = isProductOrSearchPage(site, window.location.href);
-  console.log('Content: Site config found:', site.name, ', isRelevantPage:', isRelevantPage);
+  // Check if it's the Shopee captcha page
+  if (currentUrl.includes('shopee.tw/verify/captcha')) {
+    console.log('Content: Current page is Shopee captcha page. Skipping price comparison.');
+    return;
+  }
 
-  if (isRelevantPage) {
-    const keyword = getKeywordForSite(site, window.location.href);
-    if (keyword) {
-        console.log('Content: Sending startPriceComparison message to background.');
-        chrome.runtime.sendMessage({ action: 'startPriceComparison', title: keyword, url: window.location.href });
+  const site = Object.values(config.sites).flat().find(s => currentUrl.includes(s.hostname));
+  console.log('Content: Site config lookup result:', site);
+
+  if (site && site.name === '蝦皮購物') {
+    console.log('Content: Current site is Shopee.');
+    const isRelevantPage = isProductOrSearchPage(site, currentUrl);
+    console.log('Content: isRelevantPage result:', isRelevantPage);
+
+    if (isRelevantPage) {
+      const keyword = getKeywordForSite(site, currentUrl);
+      console.log('Content: Extracted keyword:', keyword);
+      if (keyword) {
+          console.log('Content: Attempting to send message to background.');
+          try {
+              chrome.runtime.sendMessage({ action: 'startPriceComparison', title: keyword, url: currentUrl });
+              console.log('Content: Message sent successfully.');
+          } catch (error) {
+              console.error('Content: Error sending message to background:', error);
+          }
+      } else {
+          console.log('Content: Keyword is empty, not sending message.');
+      }
+    } else {
+      console.log('Content: Page is not a product or search page. Not sending message.');
     }
   } else {
-    console.log('Content: Page is not a product or search page. Not sending message.');
+    console.log('Content: Not on Shopee or no site config found for this hostname.');
   }
-} else {
-  console.log('Content: No site config found for this hostname.');
 }
+
+// Initial execution on page load
+handlePageChange();
+
+// Monitor URL changes for SPA navigation
+let urlObserver = new MutationObserver(() => {
+  if (window.location.href !== lastProcessedUrl) {
+    console.log('Content: URL changed detected by MutationObserver.');
+    lastProcessedUrl = window.location.href;
+    handlePageChange();
+  }
+});
+
+// Start observing the document body for changes (including URL changes in SPA)
+urlObserver.observe(document.body, { childList: true, subtree: true });
+
+// Listen for popstate event (browser back/forward buttons)
+window.addEventListener('popstate', () => {
+  if (window.location.href !== lastProcessedUrl) {
+    console.log('Content: URL changed detected by popstate event.');
+    lastProcessedUrl = window.location.href;
+    handlePageChange();
+  }
+});
 
 
