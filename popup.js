@@ -6,12 +6,15 @@ document.addEventListener('DOMContentLoaded', () => {
   chrome.runtime.sendMessage({ action: 'getSiteList' }, (response) => {
     console.log('Popup: Received response from background:', response);
     if (response && response.siteList) {
+      
       console.log('Popup: Processing site list:', response.siteList);
       response.siteList.filter(site => site.hostname !== 'shopee.tw').forEach(site => {
+        
         const div = document.createElement('div');
         div.className = 'site-item';
         let extraInputHtml = '';
-        if (site.hostname === 'momo.com.tw') {
+        if (site.hostname === 'momoshop.com.tw') {
+          
           extraInputHtml = `
             <input type="text" id="momoMemId" placeholder="點點賺id" style="margin-left: 10px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; width: 120px;">
           `;
@@ -29,8 +32,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Load saved state
         chrome.storage.sync.get([site.hostname, 'momoMemId'], (result) => {
           checkbox.checked = result[site.hostname] !== false; // Default to true if not set
-          if (site.hostname === 'momo.com.tw') {
-            const momoMemIdInput = document.getElementById('momoMemId');
+          if (site.hostname === 'momoshop.com.tw') {
+            const momoMemIdInput = div.querySelector('#momoMemId');
             if (result.momoMemId) {
               momoMemIdInput.value = result.momoMemId;
             } else {
