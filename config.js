@@ -18,6 +18,22 @@ const config = {
         },
       },
       {
+        name: '酷澎',
+        hostname: 'tw.coupang.com',
+        searchUrl: 'https://www.tw.coupang.com/search?q={keyword}',
+        urlPatterns: {
+          search: '/search',
+          product: '/products/'
+        },
+        selectors: {
+          product: '.search-product-item',
+          title: '.name',
+          price: '.price-value',
+          image: 'img.search-product-image',
+          link: 'a.search-product-link',
+        },
+      },
+      {
         name: '蝦皮購物',
         hostname: 'shopee.tw',
         searchUrl: 'https://shopee.tw/search?keyword={keyword}',

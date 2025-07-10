@@ -2,7 +2,7 @@
 {
   "manifest_version": 3,
   "name": "比吧",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "幫您更快找到有沒有比蝦皮賣的更便宜的電商",
   "permissions": [
     "storage"
