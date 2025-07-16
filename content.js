@@ -117,6 +117,12 @@ function handlePageChange() {
   const currentUrl = window.location.href;
   console.log('Content: handlePageChange triggered for URL:', currentUrl);
 
+  // Check if the page is being pre-rendered
+  if (document.prerendering) {
+    console.log('Content: Page is pre-rendering. Skipping price comparison.');
+    return;
+  }
+
   // Check if it's the Shopee captcha page
   if (currentUrl.includes('shopee.tw/verify/captcha')) {
     console.log('Content: Current page is Shopee captcha page. Skipping price comparison.');
