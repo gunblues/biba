@@ -183,4 +183,7 @@ window.addEventListener('popstate', () => {
   }
 });
 
+// Listen for prerenderingchange event (page becomes active from prerendered state)
+document.addEventListener('prerenderingchange', handlePageChange);
+
 

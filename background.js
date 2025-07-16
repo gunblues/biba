@@ -2,7 +2,34 @@
 importScripts('config.js');
 
 // This set stores the tab IDs that our extension has opened.
-const ourOpenedTabs = new Set();
+// It will be loaded from storage on service worker startup.
+let ourOpenedTabs = new Set();
+
+// Function to load tab IDs from storage
+async function loadOpenedTabs() {
+  try {
+    const result = await chrome.storage.local.get(['ourOpenedTabs']);
+    if (result.ourOpenedTabs) {
+      ourOpenedTabs = new Set(result.ourOpenedTabs);
+      console.log('Background: Loaded ourOpenedTabs from storage:', Array.from(ourOpenedTabs));
+    }
+  } catch (error) {
+    console.error('Background: Error loading ourOpenedTabs from storage:', error);
+  }
+}
+
+// Function to save tab IDs to storage
+async function saveOpenedTabs() {
+  try {
+    await chrome.storage.local.set({ ourOpenedTabs: Array.from(ourOpenedTabs) });
+    console.log('Background: Saved ourOpenedTabs to storage:', Array.from(ourOpenedTabs));
+  } catch (error) {
+    console.error('Background: Error saving ourOpenedTabs to storage:', error);
+  }
+}
+
+// Load opened tabs when the service worker starts
+loadOpenedTabs();
 
 chrome.runtime.onInstalled.addListener(() => {
   console.log('Background: Extension installed or updated. Setting default preferences.');
@@ -79,12 +106,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         } else {
           console.log(`Background: Successfully closed tab ${tabId}.`);
         }
-        // Remove from ourOpenedTabs only after the attempt to close
-        ourOpenedTabs.delete(tabId);
-        console.log(`Background: Removed tab ${tabId} from ourOpenedTabs. Current set:`, Array.from(ourOpenedTabs));
+        // ourOpenedTabs.delete(tabId) is handled by chrome.tabs.onRemoved.addListener
       });
     });
-    // Do NOT clear ourOpenedTabs here. It will be cleared by individual callbacks or onRemoved listener.
+    ourOpenedTabs.clear(); // Clear the set immediately
+    saveOpenedTabs(); // Save the empty set to storage
   }
 });
 
@@ -92,6 +118,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 chrome.tabs.onRemoved.addListener((tabId) => {
     if (ourOpenedTabs.has(tabId)) {
         ourOpenedTabs.delete(tabId);
+        saveOpenedTabs(); // Save state after removing a tab
         console.log(`Background: Tab ${tabId} closed, removed from ourOpenedTabs set. Current set:`, Array.from(ourOpenedTabs));
     }
 });
@@ -168,6 +195,7 @@ function openSearchTabs(keyword, currentSite) {
           chrome.tabs.create({ url: searchUrl }, (newTab) => {
             if (newTab && newTab.id) {
               ourOpenedTabs.add(newTab.id);
+              saveOpenedTabs(); // Save state after adding a new tab
               console.log(`Background: Added tab ${newTab.id} to ourOpenedTabs. Current set:`, Array.from(ourOpenedTabs));
             } else {
               console.error(`Background: Failed to create tab for ${site.name} or newTab.id is missing.`);
